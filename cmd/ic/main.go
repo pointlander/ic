@@ -70,5 +70,6 @@ func main() {
 			}
 		}
 		fmt.Println(sep)
+		fmt.Println("-----------------------------------")
 	}
 }
