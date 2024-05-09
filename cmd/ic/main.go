@@ -46,12 +46,25 @@ func main() {
 	flag.Parse()
 
 	rng := rand.New(rand.NewSource(1))
-
-	data, err := os.ReadFile("10.txt.utf-8")
-	if err != nil {
-		panic(err)
+	books := []string{
+		"books/10.txt.utf-8",
+		"books/84.txt.utf-8",
+		"books/145.txt.utf-8",
+		"books/1342.txt.utf-8",
+		"books/1513.txt.utf-8",
+		"books/2641.txt.utf-8",
+		"books/2701.txt.utf-8",
+		"books/37106.txt.utf-8",
 	}
-	tree := ic.BuildSuffixTree(data)
+	var input []byte
+	for _, book := range books {
+		data, err := os.ReadFile(book)
+		if err != nil {
+			panic(err)
+		}
+		input = append(input, data...)
+	}
+	tree := ic.BuildSuffixTree(input)
 	sep := *FlagPrefix
 	for s := 0; s < 256; s++ {
 		dist, sum := []float64{}, 0.0
