@@ -5,6 +5,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math"
 	"math/rand"
@@ -36,7 +37,14 @@ func softmax(values []float64) {
 	}
 }
 
+var (
+	// FlagPrefix is the prefix
+	FlagPrefix = flag.String("prefix", "God", "the prefix string")
+)
+
 func main() {
+	flag.Parse()
+
 	rng := rand.New(rand.NewSource(1))
 
 	data, err := os.ReadFile("10.txt.utf-8")
@@ -44,7 +52,7 @@ func main() {
 		panic(err)
 	}
 	tree := ic.BuildSuffixTree(data)
-	sep := "God"
+	sep := *FlagPrefix
 	for s := 0; s < 256; s++ {
 		dist, sum := []float64{}, 0.0
 		for i := 0; i < 256; i++ {
