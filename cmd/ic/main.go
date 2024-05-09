@@ -19,5 +19,6 @@ func main() {
 	tree := ic.BuildSuffixTree(data)
 	sep := "God"
 	fmt.Println(tree.Index(sep))
-	fmt.Println(tree.Edges[uint(sep[0])])
+	node := tree.Edges[uint(sep[0])].EndNode
+	fmt.Println(tree.Nodes[node].Count)
 }

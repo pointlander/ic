@@ -5,12 +5,17 @@
 package ic
 
 type Edge struct {
-	first_index, last_index, start_node, end_node int
+	FirstIndex, LastIndex, StartNode, EndNode int
+}
+
+type Node struct {
+	Node  int
+	Count int
 }
 
 type SuffixTree struct {
 	Edges  map[uint]Edge
-	Nodes  []int
+	Nodes  []Node
 	Buffer []byte
 }
 
@@ -19,14 +24,14 @@ const SYMBOL_SIZE = 9
 func BuildSuffixTree(input []byte) *SuffixTree {
 	length := len(input)
 	size := 2 * length
-	edges, nodes := make(map[uint]Edge, size), make([]int, size)
+	edges, nodes := make(map[uint]Edge, size), make([]Node, size)
 	for i := range nodes {
-		nodes[i] = -1
+		nodes[i].Node = -1
 	}
 
 	putEdge := func(edge Edge) {
-		symbol := uint(input[edge.first_index])
-		edges[(uint(edge.start_node)<<SYMBOL_SIZE)|symbol] = edge
+		symbol := uint(input[edge.FirstIndex])
+		edges[(uint(edge.StartNode)<<SYMBOL_SIZE)|symbol] = edge
 	}
 
 	getEdge := func(node, index int) Edge {
@@ -41,11 +46,12 @@ func BuildSuffixTree(input []byte) *SuffixTree {
 	}
 
 	putNode := func(node, parent int) {
-		nodes[node] = parent
+		nodes[node].Node = parent
+		nodes[node].Count++
 	}
 
 	getNode := func(node int) int {
-		return nodes[node]
+		return nodes[node].Node
 	}
 
 	node_count, parent_node, origin, first_index, last_index := 1, 0, 0, 0, -1
@@ -57,14 +63,14 @@ func BuildSuffixTree(input []byte) *SuffixTree {
 			}
 		} else {
 			edge, last_edge := getEdge(origin, first_index), last_index-first_index
-			last_edge += edge.first_index
+			last_edge += edge.FirstIndex
 			next_edge := last_edge + 1
 			if v == input[next_edge] {
 				return true
 			}
-			putEdge(Edge{first_index: edge.first_index, last_index: last_edge, start_node: origin, end_node: node_count})
+			putEdge(Edge{FirstIndex: edge.FirstIndex, LastIndex: last_edge, StartNode: origin, EndNode: node_count})
 			putNode(node_count, origin)
-			edge.first_index, edge.start_node = next_edge, node_count
+			edge.FirstIndex, edge.StartNode = next_edge, node_count
 			putEdge(edge)
 			parent_node = node_count
 			node_count++
@@ -77,19 +83,19 @@ func BuildSuffixTree(input []byte) *SuffixTree {
 			return
 		}
 		edge := getEdge(origin, first_index)
-		span := edge.last_index - edge.first_index
+		span := edge.LastIndex - edge.FirstIndex
 		for span <= (last_index - first_index) {
 			first_index += span + 1
-			origin = edge.end_node
+			origin = edge.EndNode
 			if first_index <= last_index {
-				edge = getEdge(edge.end_node, first_index)
-				span = edge.last_index - edge.first_index
+				edge = getEdge(edge.EndNode, first_index)
+				span = edge.LastIndex - edge.FirstIndex
 			}
 		}
 	}
 
 	addEdge := func(i int) {
-		putEdge(Edge{first_index: i, last_index: length, start_node: parent_node, end_node: node_count})
+		putEdge(Edge{FirstIndex: i, LastIndex: length, StartNode: parent_node, EndNode: node_count})
 		node_count++
 		if origin == 0 {
 			first_index++
@@ -122,11 +128,11 @@ func BuildSuffixTree(input []byte) *SuffixTree {
 	/*add the last end nodes*/
 	putEdge = func(edge Edge) {
 		symbol := uint(256)
-		if int(edge.first_index) < length {
-			symbol = uint(input[edge.first_index])
+		if int(edge.FirstIndex) < length {
+			symbol = uint(input[edge.FirstIndex])
 		}
 
-		edges[(uint(edge.start_node)<<SYMBOL_SIZE)|symbol] = edge
+		edges[(uint(edge.StartNode)<<SYMBOL_SIZE)|symbol] = edge
 	}
 
 	getEdge = func(node, index int) Edge {
@@ -155,14 +161,14 @@ func BuildSuffixTree(input []byte) *SuffixTree {
 			}
 		} else {
 			edge, last_edge := getEdge(origin, first_index), last_index-first_index
-			last_edge += edge.first_index
+			last_edge += edge.FirstIndex
 			next_edge := last_edge + 1
 			if next_edge == length {
 				return true
 			}
-			putEdge(Edge{first_index: edge.first_index, last_index: last_edge, start_node: origin, end_node: node_count})
+			putEdge(Edge{FirstIndex: edge.FirstIndex, LastIndex: last_edge, StartNode: origin, EndNode: node_count})
 			putNode(node_count, origin)
-			edge.first_index, edge.start_node = next_edge, node_count
+			edge.FirstIndex, edge.StartNode = next_edge, node_count
 			putEdge(edge)
 			parent_node = node_count
 			node_count++
@@ -202,11 +208,11 @@ search:
 		}
 		/*fmt.Printf("at node %v %v %v %v\n", edge.first_index, edge.last_index, edge.start_node, edge.end_node)
 		  fmt.Printf("found '%c'\n", sep[i])*/
-		node, last_edge, last_i, i = int(edge.end_node), edge, i, i+1
-		if edge.first_index >= edge.last_index {
+		node, last_edge, last_i, i = int(edge.EndNode), edge, i, i+1
+		if edge.FirstIndex >= edge.LastIndex {
 			continue search
 		}
-		for index := edge.first_index + 1; index <= edge.last_index && i < len(sep); index++ {
+		for index := edge.FirstIndex + 1; index <= edge.LastIndex && i < len(sep); index++ {
 			if sep[i] != tree.Buffer[index] {
 				return -1
 			}
@@ -215,5 +221,5 @@ search:
 		}
 	}
 	/*fmt.Printf("%v\n", string(tree.buffer[int(last_edge.first_index) - last_i:int(last_edge.first_index) - last_i + len(sep)]))*/
-	return int(last_edge.first_index) - last_i
+	return int(last_edge.FirstIndex) - last_i
 }
