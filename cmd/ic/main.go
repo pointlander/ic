@@ -68,15 +68,23 @@ func main() {
 	sep := *FlagPrefix
 	for s := 0; s < 256; s++ {
 		dist, sum := []float64{}, 0.0
-		for i := 0; i < 256; i++ {
-			node := tree.Index(fmt.Sprintf("%s%c", sep, i))
-			if node < 0 {
-				dist = append(dist, 0)
-				continue
+		size := 8
+		if len(sep) < 8 {
+			size = len(sep)
+		}
+		for sum == 0 && size <= len(sep) {
+			dist = []float64{}
+			for i := 0; i < 256; i++ {
+				node := tree.Index(fmt.Sprintf("%s%c", sep[len(sep)-size:], i))
+				if node < 0 {
+					dist = append(dist, 0)
+					continue
+				}
+				value := float64(tree.Nodes[node].Count)
+				sum += value
+				dist = append(dist, value)
 			}
-			value := float64(tree.Nodes[node].Count)
-			sum += value
-			dist = append(dist, value)
+			size++
 		}
 		for key, value := range dist {
 			dist[key] = value / sum
