@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
 
 	"github.com/pointlander/ic"
+	"github.com/pointlander/ic/books"
 )
 
 const (
@@ -46,7 +46,7 @@ func main() {
 	flag.Parse()
 
 	rng := rand.New(rand.NewSource(1))
-	books := []string{
+	/*books := []string{
 		"books/10.txt.utf-8",
 		"books/84.txt.utf-8",
 		"books/145.txt.utf-8",
@@ -63,13 +63,14 @@ func main() {
 			panic(err)
 		}
 		input = append(input, data...)
-	}
+	}*/
+	input := books.GetBible()
 	tree := ic.BuildSuffixTree(input)
 	sep := *FlagPrefix
 	for s := 0; s < 256; s++ {
 		dist, sum := []float64{}, 0.0
-		size := 8
-		if len(sep) < 8 {
+		size := 16
+		if len(sep) < size {
 			size = len(sep)
 		}
 		for sum == 0 && size <= len(sep) {
