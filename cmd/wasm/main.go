@@ -14,17 +14,36 @@ import (
 	"github.com/pointlander/ic/books"
 )
 
-var tree *ic.SuffixTree
+var (
+	tree    *ic.SuffixTree
+	loading = true
+)
 
 func main() {
-	input := books.GetBible()
-	tree = ic.BuildSuffixTree(input)
+	js.Global().Set("load", loadWrapper())
 	js.Global().Set("inference", inferenceWrapper())
 	<-make(chan struct{})
 }
 
+func Load() {
+	input := books.GetBible()
+	tree = ic.BuildSuffixTree(input)
+	return
+}
+
 func Inference(prefix string, seed int64, size, count int) string {
 	return tree.Inference(prefix, seed, size, count)
+}
+
+func loadWrapper() js.Func {
+	loadFunc := js.FuncOf(func(this js.Value, args []js.Value) any {
+		if len(args) != 0 {
+			return "Invalid no of arguments passed"
+		}
+		Load()
+		return true
+	})
+	return loadFunc
 }
 
 func inferenceWrapper() js.Func {

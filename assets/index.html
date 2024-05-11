@@ -4,33 +4,55 @@
 		<meta charset="utf-8"/>
 		<script src="wasm_exec.js"></script>
 		<script>
-			const go = new Go();
-			WebAssembly.instantiateStreaming(fetch("json.wasm"), go.importObject).then((result) => {
-				go.run(result.instance);
-			});
 		</script>
 	</head>
 	<body>
-        <div id="loading">Takes some time to load...</div>
+        <div id="loading">Loading...</div>
+        <a href="https://github.com/pointlander/ic" target=”_blank”>Source</a>
         <form id="form">
-            Seed: <input type="text" id="seed" name="seed" value="33"/><br/>
-            Size: <input type="text" id="size" name="size" value="16"/><br/>
-            Count: <input type="text" id="count" name="count" value="33"/></br>
+            <table>
+                <tr>
+                    <td>Seed</td>
+                    <td>Random generator seed</td>
+                    <td><input type="text" id="seed" name="seed" value="33"/></td>
+                </tr>
+                <tr>
+                    <td>Size</td>
+                    <td>Context size, smaller is more random</td>
+                    <td><input type="text" id="size" name="size" value="2"/></td>
+                </tr>
+                <tr>
+                    <td>Count</td>
+                    <td>Amount of text to generate</td>
+                    <td><input type="text" id="count" name="count" value="512"/></td>
+                </tr>
+                <tr>
+                    <td>Query</td>
+                    <td>Input query</td>
+                    <td><input type="text" id="query" name="query"/></td>
+                </tr>
+            </table>
             <textarea id="text" name="text" rows="33" cols="80"></textarea><br/>
             <input type="submit"/>
         </form>
         <script type="text/javascript">
+            const go = new Go();
+			WebAssembly.instantiateStreaming(fetch("tree.wasm"), go.importObject).then((result) => {
+				go.run(result.instance);
+                load();
+                document.getElementById("loading").hidden = true;
+			});
             function submit(event) {
                 event.preventDefault();
-                text = document.getElementById('text').value;
+                query = document.getElementById('query').value;
                 seed = parseInt(document.getElementById('seed').value);
                 size = parseInt(document.getElementById('size').value);
                 count = parseInt(document.getElementById('count').value);
-                document.getElementById('text').value = inference(text, seed, size, count);
+                document.getElementById('text').value = inference(query, seed, size, count);
                 return false;
             }
             var form = document.getElementById("form");
-            form.addEventListener('submit', submit);
+            form.addEventListener('submit', submit); 
         </script>
     </body>
 </html>
