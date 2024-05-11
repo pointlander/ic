@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"math"
-	"math/rand"
 
 	"github.com/pointlander/ic"
 	"github.com/pointlander/ic/books"
@@ -45,7 +44,6 @@ var (
 func main() {
 	flag.Parse()
 
-	rng := rand.New(rand.NewSource(1))
 	/*books := []string{
 		"books/10.txt.utf-8",
 		"books/84.txt.utf-8",
@@ -66,40 +64,5 @@ func main() {
 	}*/
 	input := books.GetBible()
 	tree := ic.BuildSuffixTree(input)
-	sep := *FlagPrefix
-	for s := 0; s < 256; s++ {
-		dist, sum := []float64{}, 0.0
-		size := 16
-		if len(sep) < size {
-			size = len(sep)
-		}
-		for sum == 0 && size <= len(sep) {
-			dist = []float64{}
-			for i := 0; i < 256; i++ {
-				node := tree.Index(fmt.Sprintf("%s%c", sep[len(sep)-size:], i))
-				if node < 0 {
-					dist = append(dist, 0)
-					continue
-				}
-				value := float64(tree.Nodes[node].Count)
-				sum += value
-				dist = append(dist, value)
-			}
-			size++
-		}
-		for key, value := range dist {
-			dist[key] = value / sum
-		}
-		//softmax(dist)
-		selected, sum := rng.Float64(), 0
-		for i, value := range dist {
-			sum += value
-			if sum > selected {
-				sep = fmt.Sprintf("%s%c", sep, i)
-				break
-			}
-		}
-		fmt.Println(sep)
-		fmt.Println("-----------------------------------")
-	}
+	fmt.Println(tree.Inference(*FlagPrefix, 1, 16, 256))
 }

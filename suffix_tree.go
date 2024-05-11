@@ -2,7 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:generate ./generate.sh
+
 package ic
+
+import (
+	"fmt"
+	"math/rand"
+)
 
 type Edge struct {
 	FirstIndex, LastIndex, StartNode, EndNode int
@@ -222,4 +229,40 @@ search:
 	}
 	/*fmt.Printf("%v\n", string(tree.buffer[int(last_edge.first_index) - last_i:int(last_edge.first_index) - last_i + len(sep)]))*/
 	return int(last_edge.FirstIndex) - last_i
+}
+
+func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) string {
+	rng := rand.New(rand.NewSource(seed))
+	for s := 0; s < count; s++ {
+		dist, sum := []float64{}, 0.0
+		if len(prefix) < size {
+			size = len(prefix)
+		}
+		for sum == 0 && size <= len(prefix) {
+			dist = []float64{}
+			for i := 0; i < 256; i++ {
+				node := tree.Index(fmt.Sprintf("%s%c", prefix[len(prefix)-size:], i))
+				if node < 0 {
+					dist = append(dist, 0)
+					continue
+				}
+				value := float64(tree.Nodes[node].Count)
+				sum += value
+				dist = append(dist, value)
+			}
+			size++
+		}
+		for key, value := range dist {
+			dist[key] = value / sum
+		}
+		selected, sum := rng.Float64(), 0
+		for i, value := range dist {
+			sum += value
+			if sum > selected {
+				prefix = fmt.Sprintf("%s%c", prefix, i)
+				break
+			}
+		}
+	}
+	return prefix
 }

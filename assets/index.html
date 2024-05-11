@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="wasm_exec.js"></script>
+		<script>
+			const go = new Go();
+			WebAssembly.instantiateStreaming(fetch("json.wasm"), go.importObject).then((result) => {
+				go.run(result.instance);
+			});
+		</script>
+	</head>
+	<body>
+        <div id="loading">Takes some time to load...</div>
+        <form id="form">
+            Seed: <input type="text" id="seed" name="seed" value="33"/><br/>
+            Size: <input type="text" id="size" name="size" value="16"/><br/>
+            Count: <input type="text" id="count" name="count" value="33"/></br>
+            <textarea id="text" name="text" rows="33" cols="80"></textarea><br/>
+            <input type="submit"/>
+        </form>
+        <script type="text/javascript">
+            function submit(event) {
+                event.preventDefault();
+                text = document.getElementById('text').value;
+                seed = parseInt(document.getElementById('seed').value);
+                size = parseInt(document.getElementById('size').value);
+                count = parseInt(document.getElementById('count').value);
+                document.getElementById('text').value = inference(text, seed, size, count);
+                return false;
+            }
+            var form = document.getElementById("form");
+            form.addEventListener('submit', submit);
+        </script>
+    </body>
+</html>
