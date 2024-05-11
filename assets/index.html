@@ -12,19 +12,9 @@
         <form id="form">
             <table>
                 <tr>
-                    <td>Seed</td>
-                    <td>Random generator seed</td>
-                    <td><input type="text" id="seed" name="seed" value="33"/></td>
-                </tr>
-                <tr>
-                    <td>Size</td>
-                    <td>Context size, smaller is more random</td>
-                    <td><input type="text" id="size" name="size" value="2"/></td>
-                </tr>
-                <tr>
                     <td>Count</td>
                     <td>Amount of text to generate</td>
-                    <td><input type="text" id="count" name="count" value="512"/></td>
+                    <td><input type="text" id="count" name="count" value="1024"/></td>
                 </tr>
                 <tr>
                     <td>Query</td>
@@ -45,8 +35,8 @@
             function submit(event) {
                 event.preventDefault();
                 query = document.getElementById('query').value;
-                seed = parseInt(document.getElementById('seed').value);
-                size = parseInt(document.getElementById('size').value);
+                seed = Math.floor(Math.random() * 1000000);
+                size = query.length;
                 count = parseInt(document.getElementById('count').value);
                 document.getElementById('text').value = inference(query, seed, size, count);
                 return false;

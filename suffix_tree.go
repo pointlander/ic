@@ -204,14 +204,14 @@ func BuildSuffixTree(input []byte) *SuffixTree {
 	return tree
 }
 
-func (tree *SuffixTree) Index(sep string) int {
+func (tree *SuffixTree) Index(sep string) (Edge, int) {
 	i, node, last_i := 0, 0, 0
 	var last_edge Edge
 search:
 	for i < len(sep) {
 		edge, has := tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(sep[i])]
 		if !has {
-			return -1
+			return edge, -1
 		}
 		/*fmt.Printf("at node %v %v %v %v\n", edge.first_index, edge.last_index, edge.start_node, edge.end_node)
 		  fmt.Printf("found '%c'\n", sep[i])*/
@@ -221,14 +221,14 @@ search:
 		}
 		for index := edge.FirstIndex + 1; index <= edge.LastIndex && i < len(sep); index++ {
 			if sep[i] != tree.Buffer[index] {
-				return -1
+				return edge, -1
 			}
 			/*fmt.Printf("found '%c'\n", sep[i])*/
 			i++
 		}
 	}
 	/*fmt.Printf("%v\n", string(tree.buffer[int(last_edge.first_index) - last_i:int(last_edge.first_index) - last_i + len(sep)]))*/
-	return int(last_edge.FirstIndex) - last_i
+	return last_edge, int(last_edge.FirstIndex) - last_i
 }
 
 func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) string {
@@ -241,12 +241,13 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) st
 		for sum == 0 && size <= len(prefix) {
 			dist = []float64{}
 			for i := 0; i < 256; i++ {
-				node := tree.Index(fmt.Sprintf("%s%c", prefix[len(prefix)-size:], i))
-				if node < 0 {
+				edge, has := tree.Index(fmt.Sprintf("%s%c", prefix[len(prefix)-size:], i))
+				node := tree.Nodes[edge.EndNode]
+				if has < 0 {
 					dist = append(dist, 0)
 					continue
 				}
-				value := float64(tree.Nodes[node].Count)
+				value := float64(node.Count)
 				sum += value
 				dist = append(dist, value)
 			}
