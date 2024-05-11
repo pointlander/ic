@@ -234,15 +234,12 @@ search:
 func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) string {
 	rng := rand.New(rand.NewSource(seed))
 	for s := 0; s < count; s++ {
-		dist, sum := []float64{}, 0.0
-		if len(prefix) < size {
-			size = len(prefix)
-		}
-		for sum == 0 && size <= len(prefix) {
+		dist, sum, start := []float64{}, 0.0, 0
+		for sum == 0 && start < len(prefix) {
 			dist = []float64{}
 			for i := 0; i < 256; i++ {
-				edge, has := tree.Index(fmt.Sprintf("%s%c", prefix[len(prefix)-size:], i))
-				node := tree.Nodes[edge.EndNode]
+				edge, has := tree.Index(fmt.Sprintf("%s%c", prefix[start:], i))
+				node := tree.Nodes[edge.StartNode]
 				if has < 0 {
 					dist = append(dist, 0)
 					continue
@@ -251,7 +248,7 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) st
 				sum += value
 				dist = append(dist, value)
 			}
-			size++
+			start++
 		}
 		for key, value := range dist {
 			dist[key] = value / sum
@@ -261,6 +258,7 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) st
 			sum += value
 			if sum > selected {
 				prefix = fmt.Sprintf("%s%c", prefix, i)
+				fmt.Println(prefix)
 				break
 			}
 		}
