@@ -26,13 +26,14 @@ func main() {
 }
 
 func Load() {
-	input := books.GetBible()
-	tree = ic.BuildSuffixTree(input)
+	input, ranges := books.GetBible()
+	tree = ic.BuildSuffixTree(input, ranges)
 	return
 }
 
 func Inference(prefix string, seed int64, size, count int) string {
-	return tree.Inference(prefix, seed, size, count)
+	_, result := tree.Inference(prefix, seed, size, count)
+	return result
 }
 
 func loadWrapper() js.Func {
@@ -51,7 +52,7 @@ func inferenceWrapper() js.Func {
 		if len(args) != 4 {
 			return "Invalid no of arguments passed"
 		}
-		return tree.Inference(args[0].String(), int64(args[1].Int()), args[2].Int(), args[3].Int())
+		return Inference(args[0].String(), int64(args[1].Int()), args[2].Int(), args[3].Int())
 	})
 	return inferenceFunc
 }

@@ -62,7 +62,13 @@ func main() {
 		}
 		input = append(input, data...)
 	}*/
-	input := books.GetBible()
-	tree := ic.BuildSuffixTree(input)
-	fmt.Println(tree.Inference(*FlagPrefix, 1, 16, 256))
+	input, ranges := books.GetBible()
+	tree := ic.BuildSuffixTree(input, ranges)
+	results := tree.Brute(*FlagPrefix, 1, 16, 256)
+	for _, result := range results {
+		if result != "" {
+			fmt.Println(result)
+			fmt.Println("-----------------------------------")
+		}
+	}
 }

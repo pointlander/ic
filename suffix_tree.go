@@ -9,6 +9,8 @@ package ic
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/pointlander/ic/books"
 )
 
 type Edge struct {
@@ -24,11 +26,12 @@ type SuffixTree struct {
 	Edges  map[uint]Edge
 	Nodes  []Node
 	Buffer []byte
+	Ranges []books.Range
 }
 
 const SYMBOL_SIZE = 9
 
-func BuildSuffixTree(input []byte) *SuffixTree {
+func BuildSuffixTree(input []byte, ranges []books.Range) *SuffixTree {
 	length := len(input)
 	size := 2 * length
 	edges, nodes := make(map[uint]Edge, size), make([]Node, size)
@@ -187,6 +190,7 @@ func BuildSuffixTree(input []byte) *SuffixTree {
 		Edges:  edges,
 		Nodes:  nodes,
 		Buffer: input,
+		Ranges: ranges,
 	}
 	parent_node = origin
 	if findEdge(length, 0) {
@@ -231,24 +235,39 @@ search:
 	return last_edge, int(last_edge.FirstIndex) - last_i
 }
 
-func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) string {
+func (tree *SuffixTree) Brute(prefix string, seed int64, size, count int) []string {
+	results := make([]string, 256)
+	for i := range results {
+		found, result := tree.Inference(fmt.Sprintf("%s%c", prefix, i), seed, size, count)
+		if found {
+			results[i] = result
+		}
+	}
+	return results
+}
+
+func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) (bool, string) {
 	rng := rand.New(rand.NewSource(seed))
+	found := false
 	for s := 0; s < count; s++ {
-		dist, sum, start := []float64{}, 0.0, 0
-		for sum == 0 && start < len(prefix) {
-			dist = []float64{}
-			for i := 0; i < 256; i++ {
-				edge, has := tree.Index(fmt.Sprintf("%s%c", prefix[start:], i))
-				node := tree.Nodes[edge.StartNode]
-				if has < 0 {
-					dist = append(dist, 0)
-					continue
-				}
-				value := float64(node.Count)
-				sum += value
-				dist = append(dist, value)
+		dist, sum := []float64{}, 0.0
+		books := make(map[int]bool)
+		for i := 0; i < 256; i++ {
+			edge, has := tree.Index(fmt.Sprintf("%s%c", prefix, i))
+			node := tree.Nodes[edge.StartNode]
+			if has < 0 {
+				dist = append(dist, 0)
+				continue
 			}
-			start++
+			value := float64(node.Count)
+			sum += value
+			dist = append(dist, value)
+			for i, r := range tree.Ranges {
+				if edge.FirstIndex >= r.Begin && edge.FirstIndex <= r.End {
+					books[i] = true
+					break
+				}
+			}
 		}
 		for key, value := range dist {
 			dist[key] = value / sum
@@ -258,10 +277,10 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) st
 			sum += value
 			if sum > selected {
 				prefix = fmt.Sprintf("%s%c", prefix, i)
-				fmt.Println(prefix)
+				found = true
 				break
 			}
 		}
 	}
-	return prefix
+	return found, prefix
 }

@@ -14,7 +14,12 @@ import (
 //go:embed *.bz2
 var f embed.FS
 
-func GetBible() []byte {
+type Range struct {
+	Begin int
+	End   int
+}
+
+func GetBible() ([]byte, []Range) {
 	bible := []byte{}
 	files := []string{
 		"10.txt.utf-8.bz2",
@@ -29,7 +34,8 @@ func GetBible() []byte {
 		"57121.txt.utf-8.bz2",
 		"59041.txt.utf-8.bz2",
 	}
-	for _, file := range files {
+	ranges := make([]Range, len(files))
+	for i, file := range files {
 		data, err := f.ReadFile(file)
 		if err != nil {
 			panic(err)
@@ -39,7 +45,9 @@ func GetBible() []byte {
 		if err != nil {
 			panic(err)
 		}
+		ranges[i].Begin = len(bible)
 		bible = append(bible, data...)
+		ranges[i].End = len(bible)
 	}
-	return bible
+	return bible, ranges
 }
