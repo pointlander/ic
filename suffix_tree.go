@@ -285,39 +285,41 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) (b
 	return found, prefix
 }
 
-func (tree *SuffixTree) Recursive(prefix string, cost int, count int) (int, string) {
-	type Entry struct {
-		Cost  int
-		Value string
-	}
+// Pair is a pair of values
+type Pair struct {
+	Int int
+	Str string
+}
 
+func (tree *SuffixTree) Recursive(prefix Pair, count int) Pair {
 	if count == 0 {
-		return cost, prefix
+		return prefix
 	}
 
-	sum := 0
-	entries := make(map[int]Entry, 256)
+	sum := prefix.Int
+	entries := make([]Pair, 256)
 	for i := 0; i < 256; i++ {
-		next := fmt.Sprintf("%s%c", prefix, i)
+		next := fmt.Sprintf("%s%c", prefix.Str, i)
 		edge, has := tree.Index(next)
 		if has > 0 {
-			value := cost + tree.Nodes[edge.StartNode].Count
-			sum += value
-
-			v, n := tree.Recursive(next, value, count-1)
-			entries[i] = Entry{
-				Cost:  value + v,
-				Value: n,
+			pair := Pair{
+				Int: tree.Nodes[edge.StartNode].Count,
+				Str: next,
 			}
-			sum += v
+			pair = tree.Recursive(pair, count-1)
+			entries[i] = pair
+			sum += pair.Int
 		}
 	}
 
-	max := 0
+	max, pair := 0, Pair{
+		Int: sum,
+		Str: prefix.Str,
+	}
 	for _, v := range entries {
-		if v.Cost > max {
-			max, prefix = v.Cost, v.Value
+		if v.Int > max {
+			max, pair.Str = v.Int, v.Str
 		}
 	}
-	return sum, prefix
+	return pair
 }

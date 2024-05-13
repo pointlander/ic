@@ -64,7 +64,7 @@ func main() {
 	}*/
 	input, ranges := books.GetBible()
 	tree := ic.BuildSuffixTree(input, ranges)
-	_, result := tree.Recursive(*FlagPrefix, 0, 16)
-	_, result = tree.Inference(result, 1, 0, 1024)
+	pair := tree.Recursive(ic.Pair{Str: *FlagPrefix}, 16)
+	_, result := tree.Inference(pair.Str, 1, 0, 1024)
 	fmt.Println(result)
 }

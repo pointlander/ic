@@ -32,8 +32,8 @@ func Load() {
 }
 
 func Inference(prefix string, seed int64, size, count int) string {
-	_, result := tree.Recursive(prefix, 0, 8)
-	_, result = tree.Inference(result, seed, size, count)
+	pair := tree.Recursive(ic.Pair{Str: prefix}, 8)
+	_, result := tree.Inference(pair.Str, seed, size, count)
 	return result
 }
 
