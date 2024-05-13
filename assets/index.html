@@ -41,8 +41,36 @@
                 document.getElementById('text').value = inference(query, seed, size, count);
                 return false;
             }
+            function isSpace(character) {
+                return /\s/.test(character);
+            }
+            var text = document.getElementById("text");
+            function select(event) {
+                let selectionStart = event.currentTarget.selectionStart;
+                let value = text.value;
+                let start = selectionStart;
+                let end = selectionStart;
+                while (start - 1 >= 0 && value[start - 1] != null && !isSpace(value[start - 1])) {
+                    --start;
+                }
+                while (end + 1 < value.length && value[end + 1] != null && !isSpace(value[end + 1])) {
+                    ++end;
+                }
+                const word = value.slice(start, end + 1);
+                if (word == null) {
+                    return false
+                }
+                document.getElementById('query').value = word
+                query = word;
+                seed = Math.floor(Math.random() * 1000000);
+                size = query.length;
+                count = parseInt(document.getElementById('count').value);
+                document.getElementById('text').value = inference(query, seed, size, count);
+                return true;
+            }
             var form = document.getElementById("form");
             form.addEventListener('submit', submit); 
+            text.addEventListener("click", select);
         </script>
     </body>
 </html>
