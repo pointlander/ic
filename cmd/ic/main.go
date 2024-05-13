@@ -64,11 +64,7 @@ func main() {
 	}*/
 	input, ranges := books.GetBible()
 	tree := ic.BuildSuffixTree(input, ranges)
-	results := tree.Brute(*FlagPrefix, 1, 16, 256)
-	for _, result := range results {
-		if result != "" {
-			fmt.Println(result)
-			fmt.Println("-----------------------------------")
-		}
-	}
+	_, result := tree.Recursive(*FlagPrefix, 0, 16)
+	_, result = tree.Inference(result, 1, 0, 1024)
+	fmt.Println(result)
 }
