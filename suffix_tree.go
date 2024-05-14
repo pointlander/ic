@@ -235,6 +235,56 @@ search:
 	return last_edge, int(last_edge.FirstIndex) - last_i
 }
 
+func (tree *SuffixTree) MultiIndex(sep string) []Pair {
+	i, node, last_i := 0, 0, 0
+	var last_edge Edge
+	pairs := make([]Pair, 256)
+search:
+	for i < len(sep) {
+		edge, has := tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(sep[i])]
+		if !has {
+			return pairs
+		}
+		/*fmt.Printf("at node %v %v %v %v\n", edge.first_index, edge.last_index, edge.start_node, edge.end_node)
+		  fmt.Printf("found '%c'\n", sep[i])*/
+		node, last_edge, last_i, i = int(edge.EndNode), edge, i, i+1
+		if edge.FirstIndex >= edge.LastIndex {
+			continue search
+		}
+		for index := edge.FirstIndex + 1; index <= edge.LastIndex && i < len(sep); index++ {
+			if sep[i] != tree.Buffer[index] {
+				return pairs
+			}
+			/*fmt.Printf("found '%c'\n", sep[i])*/
+			i++
+			if i == len(sep) {
+				index++
+				if index <= edge.LastIndex {
+					j := tree.Buffer[index]
+					pairs[j].Int = tree.Nodes[edge.StartNode].Count
+					pairs[j].Str = fmt.Sprintf("%s%c", sep, j)
+					return pairs
+				} else {
+					node, last_edge = int(edge.EndNode), edge
+					break search
+				}
+			}
+		}
+	}
+	_, _ = last_i, last_edge
+	for i := range pairs {
+		edge, has := tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(i)]
+		if !has {
+			continue
+		}
+		j := tree.Buffer[edge.FirstIndex+1]
+		pairs[j].Int = tree.Nodes[edge.StartNode].Count
+		pairs[j].Str = fmt.Sprintf("%s%c", sep, i)
+	}
+	/*fmt.Printf("%v\n", string(tree.buffer[int(last_edge.first_index) - last_i:int(last_edge.first_index) - last_i + len(sep)]))*/
+	return pairs
+}
+
 func (tree *SuffixTree) Brute(prefix string, seed int64, size, count int) []string {
 	results := make([]string, 256)
 	for i := range results {
@@ -297,29 +347,27 @@ func (tree *SuffixTree) Recursive(prefix Pair, count int) Pair {
 	}
 
 	sum := prefix.Int
-	entries := make([]Pair, 256)
-	for i := 0; i < 256; i++ {
-		next := fmt.Sprintf("%s%c", prefix.Str, i)
-		edge, has := tree.Index(next)
-		if has > 0 {
-			pair := Pair{
-				Int: tree.Nodes[edge.StartNode].Count,
-				Str: next,
-			}
+	entries := tree.MultiIndex(prefix.Str)
+	found := false
+	for i, pair := range entries {
+		if pair.Str != "" {
+			found = true
 			pair = tree.Recursive(pair, count-1)
 			entries[i] = pair
 			sum += pair.Int
 		}
 	}
 
-	max, pair := 0, Pair{
-		Int: sum,
-		Str: prefix.Str,
-	}
-	for _, v := range entries {
-		if v.Int > max {
-			max, pair.Str = v.Int, v.Str
+	if found {
+		max, pair := 0, Pair{
+			Int: sum,
+			Str: prefix.Str,
+		}
+		for _, v := range entries {
+			if v.Int > max {
+				max, pair.Str = v.Int, v.Str
+			}
 		}
 	}
-	return pair
+	return prefix
 }
