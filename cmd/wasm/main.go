@@ -34,7 +34,20 @@ func Load() {
 func Inference(prefix string, seed int64, size, count int) string {
 	pair := tree.Recursive(ic.Pair{Str: prefix}, 8)
 	_, result := tree.Inference(pair.Str, seed, size, count)
-	return result
+	index := pair.Idx - count
+	if index < 0 {
+		index = 0
+	}
+	line := ""
+	for i := 0; i < 80; i++ {
+		line += "_"
+	}
+	end := pair.Idx - 8
+	if end < 0 {
+		end = 0
+	}
+	fix := string(tree.Buffer[index:end]) + "\n" + line + "\n"
+	return fix + result
 }
 
 func loadWrapper() js.Func {

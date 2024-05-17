@@ -263,6 +263,7 @@ search:
 					j := tree.Buffer[index]
 					pairs[j].Int = tree.Nodes[edge.StartNode].Count
 					pairs[j].Str = fmt.Sprintf("%s%c", sep, j)
+					pairs[j].Idx = index
 					return pairs
 				} else {
 					node, last_edge = int(edge.EndNode), edge
@@ -280,6 +281,7 @@ search:
 		j := tree.Buffer[edge.FirstIndex+1]
 		pairs[j].Int = tree.Nodes[edge.StartNode].Count
 		pairs[j].Str = fmt.Sprintf("%s%c", sep, i)
+		pairs[j].Idx = edge.FirstIndex + 1
 	}
 	/*fmt.Printf("%v\n", string(tree.buffer[int(last_edge.first_index) - last_i:int(last_edge.first_index) - last_i + len(sep)]))*/
 	return pairs
@@ -339,6 +341,7 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) (b
 type Pair struct {
 	Int int
 	Str string
+	Idx int
 }
 
 func (tree *SuffixTree) Recursive(prefix Pair, count int) Pair {
@@ -359,15 +362,17 @@ func (tree *SuffixTree) Recursive(prefix Pair, count int) Pair {
 	}
 
 	if found {
-		max, pair := 0, Pair{
+		max, pair := prefix.Int, Pair{
 			Int: sum,
 			Str: prefix.Str,
+			Idx: prefix.Idx,
 		}
 		for _, v := range entries {
 			if v.Int > max {
-				max, pair.Str = v.Int, v.Str
+				max, pair.Str, pair.Idx = v.Int, v.Str, v.Idx
 			}
 		}
+		return pair
 	}
 	return prefix
 }
