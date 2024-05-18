@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/pointlander/ic"
 	"github.com/pointlander/ic/books"
@@ -74,9 +75,10 @@ func main() {
 	for i := 0; i < 80; i++ {
 		line += "_"
 	}
-	end := pair.Idx - 8
-	if end < 0 {
-		end = 0
+	end := pair.Idx
+	idx := strings.LastIndex(string(tree.Buffer[index:end]), string(input))
+	if idx > 0 {
+		end = index + idx + len(input)
 	}
 	prefix := string(tree.Buffer[index:end]) + "\n" + line + "\n"
 	fmt.Println(prefix + result)

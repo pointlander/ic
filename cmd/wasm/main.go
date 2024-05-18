@@ -8,6 +8,7 @@
 package main
 
 import (
+	"strings"
 	"syscall/js"
 
 	"github.com/pointlander/ic"
@@ -42,9 +43,10 @@ func Inference(prefix string, seed int64, size, count int) string {
 	for i := 0; i < 80; i++ {
 		line += "_"
 	}
-	end := pair.Idx - 8
-	if end < 0 {
-		end = 0
+	end := pair.Idx
+	idx := strings.LastIndex(string(tree.Buffer[index:end]), prefix)
+	if idx > 0 {
+		end = index + idx + len(prefix)
 	}
 	fix := string(tree.Buffer[index:end]) + "\n" + line + "\n"
 	return fix + result
