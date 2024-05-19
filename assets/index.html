@@ -22,7 +22,7 @@
                     <td><input type="text" id="query" name="query"/></td>
                 </tr>
             </table>
-            <textarea id="text" name="text" rows="33" cols="80"></textarea><br/>
+            <pre id="text" style="cursor: pointer;"></pre><br/>
             <input type="submit"/>
         </form>
         <script type="text/javascript">
@@ -38,7 +38,7 @@
                 seed = Math.floor(Math.random() * 1000000);
                 size = query.length;
                 count = parseInt(document.getElementById('count').value);
-                document.getElementById('text').value = inference(query, seed, size, count);
+                document.getElementById('text').innerHTML = inference(query, seed, size, count);
                 return false;
             }
             function isSpace(character) {
@@ -46,26 +46,34 @@
             }
             var text = document.getElementById("text");
             function select(event) {
-                let selectionStart = event.currentTarget.selectionStart;
-                let value = text.value;
-                let start = selectionStart;
-                let end = selectionStart;
-                while (start - 1 >= 0 && value[start - 1] != null && !isSpace(value[start - 1])) {
-                    --start;
+                // https://stackoverflow.com/questions/7563169/detect-which-word-has-been-clicked-on-within-a-text
+                var selection = window.getSelection();
+                if (!selection || selection.rangeCount < 1) return true;
+                var range = selection.getRangeAt(0);
+                var node = selection.anchorNode;
+                var word_regexp = /^\w*$/;
+
+                while ((range.startOffset > 0) && range.toString().match(word_regexp)) {
+                    range.setStart(node, (range.startOffset - 1));
                 }
-                while (end + 1 < value.length && value[end + 1] != null && !isSpace(value[end + 1])) {
-                    ++end;
+                if (!range.toString().match(word_regexp)) {
+                    range.setStart(node, range.startOffset + 1);
                 }
-                const word = value.slice(start, end + 1);
-                if (word == null) {
-                    return false
+
+                while ((range.endOffset < node.length) && range.toString().match(word_regexp)) {
+                    range.setEnd(node, range.endOffset + 1);
                 }
+                if (!range.toString().match(word_regexp)) {
+                    range.setEnd(node, range.endOffset - 1);
+                }
+
+                var word = range.toString();
                 document.getElementById('query').value = word
                 query = word;
                 seed = Math.floor(Math.random() * 1000000);
                 size = query.length;
                 count = parseInt(document.getElementById('count').value);
-                document.getElementById('text').value = inference(query, seed, size, count);
+                document.getElementById('text').innerHTML = inference(query, seed, size, count);
                 return true;
             }
             var form = document.getElementById("form");

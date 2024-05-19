@@ -39,16 +39,12 @@ func Inference(prefix string, seed int64, size, count int) string {
 	if index < 0 {
 		index = 0
 	}
-	line := ""
-	for i := 0; i < 80; i++ {
-		line += "_"
-	}
 	end := pair.Idx
 	idx := strings.LastIndex(string(tree.Buffer[index:end]), prefix)
 	if idx > 0 {
 		end = index + idx + len(prefix)
 	}
-	fix := string(tree.Buffer[index:end]) + "\n" + line + "\n"
+	fix := string(tree.Buffer[index:end]) + "<hr/>"
 	return fix + result
 }
 
