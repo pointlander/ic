@@ -20,6 +20,7 @@ type Edge struct {
 type Node struct {
 	Node  int
 	Count int
+	Books []int
 }
 
 type SuffixTree struct {
@@ -58,6 +59,17 @@ func BuildSuffixTree(input []byte, ranges []books.Range) *SuffixTree {
 	putNode := func(node, parent int) {
 		nodes[node].Node = parent
 		nodes[node].Count++
+		for i, r := range ranges {
+			if parent >= r.Begin && parent <= r.End {
+				for _, n := range nodes[node].Books {
+					if n == i {
+						return
+					}
+				}
+				nodes[node].Books = append(nodes[node].Books, i)
+				break
+			}
+		}
 	}
 
 	getNode := func(node int) int {
@@ -261,6 +273,7 @@ search:
 				index++
 				if index <= edge.LastIndex {
 					j := tree.Buffer[index]
+					//fmt.Println(tree.Nodes[edge.StartNode].Books)
 					pairs[j].Int = tree.Nodes[edge.StartNode].Count
 					pairs[j].Str = fmt.Sprintf("%s%c", sep, j)
 					pairs[j].Idx = index
@@ -303,7 +316,6 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) (b
 	found := false
 	for s := 0; s < count; s++ {
 		dist, sum := []float64{}, 0.0
-		books := make(map[int]bool)
 		for i := 0; i < 256; i++ {
 			edge, has := tree.Index(fmt.Sprintf("%s%c", prefix, i))
 			node := tree.Nodes[edge.StartNode]
@@ -314,12 +326,6 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) (b
 			value := float64(node.Count)
 			sum += value
 			dist = append(dist, value)
-			for i, r := range tree.Ranges {
-				if edge.FirstIndex >= r.Begin && edge.FirstIndex <= r.End {
-					books[i] = true
-					break
-				}
-			}
 		}
 		for key, value := range dist {
 			dist[key] = value / sum

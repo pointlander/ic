@@ -76,9 +76,9 @@ func main() {
 		line += "_"
 	}
 	end := pair.Idx
-	idx := strings.LastIndex(string(tree.Buffer[index:end]), string(input))
+	idx := strings.LastIndex(string(tree.Buffer[index:end]), *FlagPrefix)
 	if idx > 0 {
-		end = index + idx + len(input)
+		end = index + idx + len(*FlagPrefix)
 	}
 	prefix := string(tree.Buffer[index:end]) + "\n" + line + "\n"
 	fmt.Println(prefix + result)
