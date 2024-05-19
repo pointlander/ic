@@ -9,6 +9,11 @@
 	<body>
         <div style="font-weight: bold;" id="loading">Building model...</div>
         <a href="https://github.com/pointlander/ic" target=”_blank”>Source</a>
+        <style>
+            span {
+                cursor: pointer;
+            }
+        </style>
         <form id="form">
             <table>
                 <tr>
@@ -22,7 +27,7 @@
                     <td><input type="text" id="query" name="query"/></td>
                 </tr>
             </table>
-            <pre id="text" style="cursor: pointer;"></pre><br/>
+            <pre id="text"></pre><br/>
             <input type="submit"/>
         </form>
         <script type="text/javascript">

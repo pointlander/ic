@@ -8,8 +8,10 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"syscall/js"
+	"unicode"
 
 	"github.com/pointlander/ic"
 	"github.com/pointlander/ic/books"
@@ -45,7 +47,27 @@ func Inference(prefix string, seed int64, size, count int) string {
 		end = index + idx + len(prefix)
 	}
 	fix := string(tree.Buffer[index:end]) + "<hr/>"
-	return fix + result
+	output := strings.TrimSpace(fix + result)
+	word := false
+	html := ""
+	for _, value := range output {
+		if unicode.IsSpace(value) {
+			if word {
+				html += fmt.Sprintf("</span>%c", value)
+				word = false
+			} else {
+				html += fmt.Sprintf("%c", value)
+			}
+		} else {
+			if !word {
+				html += fmt.Sprintf("<span>%c", value)
+				word = true
+			} else {
+				html += fmt.Sprintf("%c", value)
+			}
+		}
+	}
+	return html
 }
 
 func loadWrapper() js.Func {
