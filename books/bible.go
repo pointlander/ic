@@ -79,8 +79,14 @@ func GetBible() ([]byte, []Range) {
 		if err != nil {
 			panic(err)
 		}
+		str := []byte{}
+		for _, r := range string(data) {
+			if r < 256 {
+				str = append(str, byte(r))
+			}
+		}
 		ranges[i].Begin = len(bible)
-		bible = append(bible, data...)
+		bible = append(bible, str...)
 		ranges[i].End = len(bible)
 	}
 	return bible, ranges

@@ -27,6 +27,7 @@
                     <td><input type="text" id="query" name="query"/></td>
                 </tr>
             </table>
+            <p style="font-weight: bold;" id="books"></p>
             <pre id="text"></pre><br/>
             <input type="submit"/>
         </form>
@@ -43,14 +44,15 @@
                 seed = Math.floor(Math.random() * 1000000);
                 size = query.length;
                 count = parseInt(document.getElementById('count').value);
-                document.getElementById('text').innerHTML = inference(query, seed, size, count);
+                document.getElementById('text').innerHTML = inference(query, seed, size, count, true);
                 return false;
             }
             function isSpace(character) {
                 return /\s/.test(character);
             }
-            var text = document.getElementById("text");
-            function select(event) {
+            function selectWord(event, books) {
+                var b = document.getElementById("books");
+                b.innerHTML = books;
                 // https://stackoverflow.com/questions/7563169/detect-which-word-has-been-clicked-on-within-a-text
                 var selection = window.getSelection();
                 if (!selection || selection.rangeCount < 1) return true;
@@ -78,12 +80,11 @@
                 seed = Math.floor(Math.random() * 1000000);
                 size = query.length;
                 count = parseInt(document.getElementById('count').value);
-                document.getElementById('text').innerHTML = inference(query, seed, size, count);
+                document.getElementById('text').innerHTML = inference(query, seed, size, count, false);
                 return true;
             }
             var form = document.getElementById("form");
-            form.addEventListener('submit', submit); 
-            text.addEventListener("click", select);
+            form.addEventListener('submit', submit);
         </script>
     </body>
 </html>

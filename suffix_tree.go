@@ -56,11 +56,12 @@ func BuildSuffixTree(input []byte, ranges []books.Range) *SuffixTree {
 		return has
 	}
 
-	putNode := func(node, parent int) {
+	putNode := func(node, parent, first_index, last_index int) {
 		nodes[node].Node = parent
 		nodes[node].Count++
 		for i, r := range ranges {
-			if parent >= r.Begin && parent <= r.End {
+			if first_index >= r.Begin && first_index <= r.End &&
+				last_index >= r.Begin && last_index <= r.End {
 				for _, n := range nodes[node].Books {
 					if n == i {
 						return
@@ -91,7 +92,7 @@ func BuildSuffixTree(input []byte, ranges []books.Range) *SuffixTree {
 				return true
 			}
 			putEdge(Edge{FirstIndex: edge.FirstIndex, LastIndex: last_edge, StartNode: origin, EndNode: node_count})
-			putNode(node_count, origin)
+			putNode(node_count, origin, edge.FirstIndex, last_edge)
 			edge.FirstIndex, edge.StartNode = next_edge, node_count
 			putEdge(edge)
 			parent_node = node_count
@@ -139,10 +140,10 @@ func BuildSuffixTree(input []byte, ranges []books.Range) *SuffixTree {
 		parent_node = origin
 		for !findEdge(i, v) {
 			addEdge(i)
-			putNode(last_parent_node, parent_node)
+			putNode(last_parent_node, parent_node, i, last_index)
 			last_parent_node, parent_node = parent_node, origin
 		}
-		putNode(last_parent_node, parent_node)
+		putNode(last_parent_node, parent_node, i, last_index)
 		last_index++
 		canonize()
 	}
@@ -189,7 +190,7 @@ func BuildSuffixTree(input []byte, ranges []books.Range) *SuffixTree {
 				return true
 			}
 			putEdge(Edge{FirstIndex: edge.FirstIndex, LastIndex: last_edge, StartNode: origin, EndNode: node_count})
-			putNode(node_count, origin)
+			putNode(node_count, origin, edge.FirstIndex, last_edge)
 			edge.FirstIndex, edge.StartNode = next_edge, node_count
 			putEdge(edge)
 			parent_node = node_count
@@ -213,10 +214,10 @@ func BuildSuffixTree(input []byte, ranges []books.Range) *SuffixTree {
 	parent_node = origin
 	for !findEdge(length, 0) {
 		addEdge(length)
-		putNode(last_parent_node, parent_node)
+		putNode(last_parent_node, parent_node, length, last_index)
 		last_parent_node, parent_node = parent_node, origin
 	}
-	putNode(last_parent_node, parent_node)
+	putNode(last_parent_node, parent_node, length, last_index)
 	return tree
 }
 
@@ -247,63 +248,85 @@ search:
 	return last_edge, int(last_edge.FirstIndex) - last_i
 }
 
-func (tree *SuffixTree) MultiIndex(sep string) []Pair {
-	i, node, last_i := 0, 0, 0
-	var last_edge Edge
+func (tree *SuffixTree) MultiIndex(sep []byte, bok [][]int) []Pair {
 	pairs := make([]Pair, 256)
+	for s := range pairs {
+		query := make([]byte, len(sep)+1)
+		copy(query, sep)
+		query[len(query)-1] = byte(s)
+		i, node := 0, 0
+		var last_edge Edge
+		idx := 0
+		has := false
+	search:
+		for i < len(query) {
+			var edge Edge
+			edge, has = tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(query[i])]
+			if !has {
+				break
+			}
+			/*fmt.Printf("at node %v %v %v %v\n", edge.first_index, edge.last_index, edge.start_node, edge.end_node)
+			  fmt.Printf("found '%c'\n", sep[i])*/
+			node, i = int(edge.EndNode), i+1
+			idx = edge.FirstIndex
+			if edge.FirstIndex >= edge.LastIndex {
+				continue search
+			}
+			for idx := idx + 1; idx <= edge.LastIndex && i < len(query); idx++ {
+				if query[i] != tree.Buffer[idx] {
+					return pairs
+				}
+				/*fmt.Printf("found '%c'\n", sep[i])*/
+				i++
+			}
+		}
+		if has {
+			pairs[s].Int = tree.Nodes[last_edge.StartNode].Count
+			pairs[s].Str = query
+			pairs[s].Idx = idx
+			pairs[s].Bok = append(bok, tree.Nodes[last_edge.StartNode].Books)
+		}
+	}
+	return pairs
+}
+
+func (tree *SuffixTree) GetBooks(pair *Pair) {
+	i, node := 0, 0
+	has := false
 search:
-	for i < len(sep) {
-		edge, has := tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(sep[i])]
+	for i < len(pair.Str) {
+		var edge Edge
+		edge, has = tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(pair.Str[i])]
 		if !has {
-			return pairs
+			break
 		}
 		/*fmt.Printf("at node %v %v %v %v\n", edge.first_index, edge.last_index, edge.start_node, edge.end_node)
 		  fmt.Printf("found '%c'\n", sep[i])*/
-		node, last_edge, last_i, i = int(edge.EndNode), edge, i, i+1
+		node, i = int(edge.EndNode), i+1
+		if i >= len(pair.Bok) {
+			pair.Bok = append(pair.Bok, tree.Nodes[edge.StartNode].Books)
+		}
 		if edge.FirstIndex >= edge.LastIndex {
 			continue search
 		}
-		for index := edge.FirstIndex + 1; index <= edge.LastIndex && i < len(sep); index++ {
-			if sep[i] != tree.Buffer[index] {
-				return pairs
+		for index := edge.FirstIndex + 1; index <= edge.LastIndex && i < len(pair.Str); index++ {
+			if pair.Str[i] != tree.Buffer[index] {
+				return
+			}
+			if i >= len(pair.Bok) {
+				pair.Bok = append(pair.Bok, tree.Nodes[edge.StartNode].Books)
 			}
 			/*fmt.Printf("found '%c'\n", sep[i])*/
 			i++
-			if i == len(sep) {
-				index++
-				if index <= edge.LastIndex {
-					j := tree.Buffer[index]
-					//fmt.Println(tree.Nodes[edge.StartNode].Books)
-					pairs[j].Int = tree.Nodes[edge.StartNode].Count
-					pairs[j].Str = fmt.Sprintf("%s%c", sep, j)
-					pairs[j].Idx = index
-					return pairs
-				} else {
-					node, last_edge = int(edge.EndNode), edge
-					break search
-				}
-			}
 		}
 	}
-	_, _ = last_i, last_edge
-	for i := range pairs {
-		edge, has := tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(i)]
-		if !has {
-			continue
-		}
-		j := tree.Buffer[edge.FirstIndex+1]
-		pairs[j].Int = tree.Nodes[edge.StartNode].Count
-		pairs[j].Str = fmt.Sprintf("%s%c", sep, i)
-		pairs[j].Idx = edge.FirstIndex + 1
-	}
-	/*fmt.Printf("%v\n", string(tree.buffer[int(last_edge.first_index) - last_i:int(last_edge.first_index) - last_i + len(sep)]))*/
-	return pairs
+	return
 }
 
 func (tree *SuffixTree) Brute(prefix string, seed int64, size, count int) []string {
 	results := make([]string, 256)
 	for i := range results {
-		found, result := tree.Inference(fmt.Sprintf("%s%c", prefix, i), seed, size, count)
+		found, result, _ := tree.Inference(fmt.Sprintf("%s%c", prefix, i), [][]int{}, seed, size, count)
 		if found {
 			results[i] = result
 		}
@@ -311,11 +334,12 @@ func (tree *SuffixTree) Brute(prefix string, seed int64, size, count int) []stri
 	return results
 }
 
-func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) (bool, string) {
+func (tree *SuffixTree) Inference(prefix string, bok [][]int, seed int64, size, count int) (bool, string, [][]int) {
 	rng := rand.New(rand.NewSource(seed))
 	found := false
 	for s := 0; s < count; s++ {
 		dist, sum := []float64{}, 0.0
+		books := make([][]int, 256)
 		for i := 0; i < 256; i++ {
 			edge, has := tree.Index(fmt.Sprintf("%s%c", prefix, i))
 			node := tree.Nodes[edge.StartNode]
@@ -326,6 +350,7 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) (b
 			value := float64(node.Count)
 			sum += value
 			dist = append(dist, value)
+			books[i] = node.Books
 		}
 		for key, value := range dist {
 			dist[key] = value / sum
@@ -335,19 +360,21 @@ func (tree *SuffixTree) Inference(prefix string, seed int64, size, count int) (b
 			sum += value
 			if sum > selected {
 				prefix = fmt.Sprintf("%s%c", prefix, i)
+				bok = append(bok, books[i])
 				found = true
 				break
 			}
 		}
 	}
-	return found, prefix
+	return found, prefix, bok
 }
 
 // Pair is a pair of values
 type Pair struct {
 	Int int
-	Str string
+	Str []byte
 	Idx int
+	Bok [][]int
 }
 
 func (tree *SuffixTree) Recursive(prefix Pair, count int) Pair {
@@ -356,10 +383,10 @@ func (tree *SuffixTree) Recursive(prefix Pair, count int) Pair {
 	}
 
 	sum := prefix.Int
-	entries := tree.MultiIndex(prefix.Str)
+	entries := tree.MultiIndex(prefix.Str, prefix.Bok)
 	found := false
 	for i, pair := range entries {
-		if pair.Str != "" {
+		if len(pair.Str) > 0 {
 			found = true
 			pair = tree.Recursive(pair, count-1)
 			entries[i] = pair
@@ -372,10 +399,11 @@ func (tree *SuffixTree) Recursive(prefix Pair, count int) Pair {
 			Int: sum,
 			Str: prefix.Str,
 			Idx: prefix.Idx,
+			Bok: prefix.Bok,
 		}
 		for _, v := range entries {
 			if v.Int > max {
-				max, pair.Str, pair.Idx = v.Int, v.Str, v.Idx
+				max, pair.Str, pair.Idx, pair.Bok = v.Int, v.Str, v.Idx, v.Bok
 			}
 		}
 		return pair

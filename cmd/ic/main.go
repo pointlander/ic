@@ -65,8 +65,7 @@ func main() {
 	}*/
 	input, ranges := books.GetBible()
 	tree := ic.BuildSuffixTree(input, ranges)
-	pair := tree.Recursive(ic.Pair{Str: *FlagPrefix}, 8)
-	_, result := tree.Inference(pair.Str, 1, 0, 1024)
+	pair := tree.Recursive(ic.Pair{Str: []byte(*FlagPrefix)}, 9)
 	index := pair.Idx - 1024
 	if index < 0 {
 		index = 0
@@ -76,10 +75,19 @@ func main() {
 		line += "_"
 	}
 	end := pair.Idx
-	idx := strings.LastIndex(string(tree.Buffer[index:end]), *FlagPrefix)
+	idx := strings.LastIndex(string(tree.Buffer[index:end]), string(pair.Str))
 	if idx > 0 {
 		end = index + idx + len(*FlagPrefix)
 	}
+	pair.Str = append(pair.Str, tree.Buffer[pair.Idx+1:pair.Idx+1024]...)
+	tree.GetBooks(&pair)
 	prefix := string(tree.Buffer[index:end]) + "\n" + line + "\n"
-	fmt.Println(prefix + result)
+	for _, set := range pair.Bok {
+		for _, value := range set {
+			fmt.Printf("'%s' ", ranges[value].Title)
+		}
+		fmt.Println()
+	}
+	fmt.Println(prefix + string(pair.Str))
+	fmt.Println(len(string(pair.Str)), len(pair.Bok))
 }
