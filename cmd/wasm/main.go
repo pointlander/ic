@@ -19,6 +19,7 @@ import (
 
 var (
 	tree    *ic.SuffixTree
+	ranges  []books.Range
 	loading = true
 )
 
@@ -29,7 +30,8 @@ func main() {
 }
 
 func Load() {
-	input, ranges := books.GetBible()
+	var input []byte
+	input, ranges = books.GetBible()
 	tree = ic.BuildSuffixTree(input, ranges)
 	return
 }
@@ -45,15 +47,17 @@ func Inference(prefix string, seed int64, size, count int) string {
 	if idx > 0 {
 		end = index + idx + len(prefix)
 	}
-	fix := string(tree.Buffer[index:end]) + "<hr/>"
+	fix := strings.TrimSpace(string(tree.Buffer[index:end]))
 	pair.Str = append(pair.Str, tree.Buffer[pair.Idx+1:pair.Idx+count]...)
 	tree.GetBooks(&pair)
-	output := strings.TrimSpace(fix + string(pair.Str))
+
 	word := false
 	html := ""
-	for _, value := range output {
+	text, books := "", []int{}
+	for _, value := range fix {
 		if unicode.IsSpace(value) {
 			if word {
+				html += fmt.Sprintf("<span onclick=\"selectWord(event, '');\" class=\"fragment\">%s", text)
 				html += fmt.Sprintf("</span>%c", value)
 				word = false
 			} else {
@@ -61,10 +65,55 @@ func Inference(prefix string, seed int64, size, count int) string {
 			}
 		} else {
 			if !word {
-				html += fmt.Sprintf("<span onclick=\"selectWord(event);\" class=\"fragment\">%c", value)
 				word = true
+				text = fmt.Sprintf("%c", value)
+			} else {
+				text += fmt.Sprintf("%c", value)
+			}
+		}
+	}
+
+	html += "<hr/>"
+
+	suffix := string(pair.Str)
+	word = false
+	text, books = "", []int{}
+	for i, value := range suffix {
+		if unicode.IsSpace(value) {
+			if word {
+				booksValue := ""
+				for _, book := range books {
+					booksValue += ranges[book].Title + ", "
+				}
+				booksValue = strings.ReplaceAll(booksValue, "'", "")
+				html += fmt.Sprintf("<span onclick=\"selectWord(event, '%s');\" class=\"fragment\">%s", booksValue, text)
+				html += fmt.Sprintf("</span>%c", value)
+				word = false
 			} else {
 				html += fmt.Sprintf("%c", value)
+			}
+		} else {
+			if !word {
+				word = true
+				text = fmt.Sprintf("%c", value)
+				if i < len(pair.Bok) {
+					book := make([]int, len(pair.Bok[i]))
+					copy(book, pair.Bok[i])
+					books = book
+				}
+			} else {
+				text += fmt.Sprintf("%c", value)
+				if i < len(pair.Bok) {
+				add:
+					for _, value := range pair.Bok[i] {
+						for _, v := range books {
+							if v == value {
+								break add
+							}
+						}
+						books = append(books, value)
+					}
+				}
 			}
 		}
 	}

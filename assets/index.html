@@ -27,6 +27,7 @@
                     <td><input type="text" id="query" name="query"/></td>
                 </tr>
             </table>
+            <p style="font-weight: bold;" id="books"></p>
             <pre id="text"></pre><br/>
             <input type="submit"/>
         </form>
@@ -49,7 +50,10 @@
             function isSpace(character) {
                 return /\s/.test(character);
             }
-            function selectWord(event) {
+            function selectWord(event, books) {
+                var b = document.getElementById("books");
+                console.log(books);
+                b.innerHTML = books;
                 // https://stackoverflow.com/questions/7563169/detect-which-word-has-been-clicked-on-within-a-text
                 var selection = window.getSelection();
                 if (!selection || selection.rangeCount < 1) return true;
