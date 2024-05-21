@@ -78,6 +78,7 @@ func Inference(prefix string, seed int64, size, count int) string {
 	suffix := string(pair.Str)
 	word = false
 	text, books = "", []int{}
+	//html += fmt.Sprintf("<div>%d %d</div>", len(suffix), len(pair.Bok))
 	for i, value := range suffix {
 		if unicode.IsSpace(value) {
 			if word {

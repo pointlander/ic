@@ -304,7 +304,7 @@ search:
 		/*fmt.Printf("at node %v %v %v %v\n", edge.first_index, edge.last_index, edge.start_node, edge.end_node)
 		  fmt.Printf("found '%c'\n", sep[i])*/
 		node, i = int(edge.EndNode), i+1
-		if i > len(pair.Bok) {
+		if i >= len(pair.Bok) {
 			pair.Bok = append(pair.Bok, tree.Nodes[edge.StartNode].Books)
 		}
 		if edge.FirstIndex >= edge.LastIndex {
@@ -314,7 +314,7 @@ search:
 			if pair.Str[i] != tree.Buffer[index] {
 				return
 			}
-			if i > len(pair.Bok) {
+			if i >= len(pair.Bok) {
 				pair.Bok = append(pair.Bok, tree.Nodes[edge.StartNode].Books)
 			}
 			/*fmt.Printf("found '%c'\n", sep[i])*/
