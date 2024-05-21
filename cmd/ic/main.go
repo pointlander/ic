@@ -89,4 +89,5 @@ func main() {
 		fmt.Println()
 	}
 	fmt.Println(prefix + string(pair.Str))
+	fmt.Println(len(string(pair.Str)), len(pair.Bok))
 }

@@ -292,7 +292,6 @@ func (tree *SuffixTree) MultiIndex(sep []byte, bok [][]int) []Pair {
 
 func (tree *SuffixTree) GetBooks(pair *Pair) {
 	i, node := 0, 0
-	idx := 0
 	has := false
 search:
 	for i < len(pair.Str) {
@@ -310,7 +309,7 @@ search:
 		if edge.FirstIndex >= edge.LastIndex {
 			continue search
 		}
-		for index := edge.FirstIndex + 1; idx <= edge.LastIndex && i < len(pair.Str); index++ {
+		for index := edge.FirstIndex + 1; index <= edge.LastIndex && i < len(pair.Str); index++ {
 			if pair.Str[i] != tree.Buffer[index] {
 				return
 			}
