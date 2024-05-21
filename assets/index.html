@@ -49,8 +49,7 @@
             function isSpace(character) {
                 return /\s/.test(character);
             }
-            var text = document.getElementById("text");
-            function select(event) {
+            function selectWord(event) {
                 // https://stackoverflow.com/questions/7563169/detect-which-word-has-been-clicked-on-within-a-text
                 var selection = window.getSelection();
                 if (!selection || selection.rangeCount < 1) return true;
@@ -82,8 +81,7 @@
                 return true;
             }
             var form = document.getElementById("form");
-            form.addEventListener('submit', submit); 
-            text.addEventListener("click", select);
+            form.addEventListener('submit', submit);
         </script>
     </body>
 </html>

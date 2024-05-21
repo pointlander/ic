@@ -61,7 +61,7 @@ func Inference(prefix string, seed int64, size, count int) string {
 			}
 		} else {
 			if !word {
-				html += fmt.Sprintf("<span>%c", value)
+				html += fmt.Sprintf("<span onclick=\"selectWord(event);\" class=\"fragment\">%c", value)
 				word = true
 			} else {
 				html += fmt.Sprintf("%c", value)
