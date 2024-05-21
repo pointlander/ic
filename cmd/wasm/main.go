@@ -35,20 +35,20 @@ func Load() {
 }
 
 func Inference(prefix string, seed int64, size, count int) string {
-	books := make([][]int, 0, 8)
-	pair := tree.Recursive(ic.Pair{Str: prefix}, 8)
-	_, result, books := tree.Inference(pair.Str, books, seed, size, count)
+	pair := tree.Recursive(ic.Pair{Str: []byte(prefix)}, 8)
 	index := pair.Idx - count
 	if index < 0 {
 		index = 0
 	}
 	end := pair.Idx
-	idx := strings.LastIndex(string(tree.Buffer[index:end]), pair.Str)
+	idx := strings.LastIndex(string(tree.Buffer[index:end]), string(pair.Str))
 	if idx > 0 {
 		end = index + idx + len(prefix)
 	}
 	fix := string(tree.Buffer[index:end]) + "<hr/>"
-	output := strings.TrimSpace(fix + result)
+	pair.Str = append(pair.Str, tree.Buffer[pair.Idx+1:pair.Idx+count]...)
+	tree.GetBooks(&pair)
+	output := strings.TrimSpace(fix + string(pair.Str))
 	word := false
 	html := ""
 	for _, value := range output {

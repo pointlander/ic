@@ -248,57 +248,80 @@ search:
 	return last_edge, int(last_edge.FirstIndex) - last_i
 }
 
-func (tree *SuffixTree) MultiIndex(sep string, bok [][]int) []Pair {
-	i, node, last_i := 0, 0, 0
-	var last_edge Edge
+func (tree *SuffixTree) MultiIndex(sep []byte, bok [][]int) []Pair {
 	pairs := make([]Pair, 256)
+	for s := range pairs {
+		query := make([]byte, len(sep)+1)
+		copy(query, sep)
+		query[len(query)-1] = byte(s)
+		i, node := 0, 0
+		var last_edge Edge
+		idx := 0
+		has := false
+	search:
+		for i < len(query) {
+			var edge Edge
+			edge, has = tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(query[i])]
+			if !has {
+				break
+			}
+			/*fmt.Printf("at node %v %v %v %v\n", edge.first_index, edge.last_index, edge.start_node, edge.end_node)
+			  fmt.Printf("found '%c'\n", sep[i])*/
+			node, i = int(edge.EndNode), i+1
+			idx = edge.FirstIndex
+			if edge.FirstIndex >= edge.LastIndex {
+				continue search
+			}
+			for idx := idx + 1; idx <= edge.LastIndex && i < len(query); idx++ {
+				if query[i] != tree.Buffer[idx] {
+					return pairs
+				}
+				/*fmt.Printf("found '%c'\n", sep[i])*/
+				i++
+			}
+		}
+		if has {
+			pairs[s].Int = tree.Nodes[last_edge.StartNode].Count
+			pairs[s].Str = query
+			pairs[s].Idx = idx
+			pairs[s].Bok = append(bok, tree.Nodes[last_edge.StartNode].Books)
+		}
+	}
+	return pairs
+}
+
+func (tree *SuffixTree) GetBooks(pair *Pair) {
+	i, node := 0, 0
+	idx := 0
+	has := false
 search:
-	for i < len(sep) {
-		edge, has := tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(sep[i])]
+	for i < len(pair.Str) {
+		var edge Edge
+		edge, has = tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(pair.Str[i])]
 		if !has {
-			return pairs
+			break
 		}
 		/*fmt.Printf("at node %v %v %v %v\n", edge.first_index, edge.last_index, edge.start_node, edge.end_node)
 		  fmt.Printf("found '%c'\n", sep[i])*/
-		node, last_edge, last_i, i = int(edge.EndNode), edge, i, i+1
+		node, i = int(edge.EndNode), i+1
+		if i > len(pair.Bok) {
+			pair.Bok = append(pair.Bok, tree.Nodes[edge.StartNode].Books)
+		}
 		if edge.FirstIndex >= edge.LastIndex {
 			continue search
 		}
-		for index := edge.FirstIndex + 1; index <= edge.LastIndex && i < len(sep); index++ {
-			if sep[i] != tree.Buffer[index] {
-				return pairs
+		for index := edge.FirstIndex + 1; idx <= edge.LastIndex && i < len(pair.Str); index++ {
+			if pair.Str[i] != tree.Buffer[index] {
+				return
+			}
+			if i > len(pair.Bok) {
+				pair.Bok = append(pair.Bok, tree.Nodes[edge.StartNode].Books)
 			}
 			/*fmt.Printf("found '%c'\n", sep[i])*/
 			i++
-			if i == len(sep) {
-				index++
-				if index <= edge.LastIndex {
-					j := tree.Buffer[index]
-					pairs[j].Int = tree.Nodes[edge.StartNode].Count
-					pairs[j].Str = fmt.Sprintf("%s%c", sep, j)
-					pairs[j].Idx = index
-					pairs[j].Bok = append(bok, tree.Nodes[edge.StartNode].Books)
-					return pairs
-				} else {
-					node, last_edge = int(edge.EndNode), edge
-					break search
-				}
-			}
 		}
 	}
-	_, _ = last_i, last_edge
-	for i := range pairs {
-		edge, has := tree.Edges[(uint(node)<<SYMBOL_SIZE)+uint(i)]
-		if !has {
-			continue
-		}
-		pairs[i].Int = tree.Nodes[edge.StartNode].Count
-		pairs[i].Str = fmt.Sprintf("%s%c", sep, i)
-		pairs[i].Idx = edge.FirstIndex + 1
-		pairs[i].Bok = append(bok, tree.Nodes[edge.StartNode].Books)
-	}
-	/*fmt.Printf("%v\n", string(tree.buffer[int(last_edge.first_index) - last_i:int(last_edge.first_index) - last_i + len(sep)]))*/
-	return pairs
+	return
 }
 
 func (tree *SuffixTree) Brute(prefix string, seed int64, size, count int) []string {
@@ -350,7 +373,7 @@ func (tree *SuffixTree) Inference(prefix string, bok [][]int, seed int64, size, 
 // Pair is a pair of values
 type Pair struct {
 	Int int
-	Str string
+	Str []byte
 	Idx int
 	Bok [][]int
 }
@@ -364,7 +387,7 @@ func (tree *SuffixTree) Recursive(prefix Pair, count int) Pair {
 	entries := tree.MultiIndex(prefix.Str, prefix.Bok)
 	found := false
 	for i, pair := range entries {
-		if pair.Str != "" {
+		if len(pair.Str) > 0 {
 			found = true
 			pair = tree.Recursive(pair, count-1)
 			entries[i] = pair
