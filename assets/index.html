@@ -44,7 +44,7 @@
                 seed = Math.floor(Math.random() * 1000000);
                 size = query.length;
                 count = parseInt(document.getElementById('count').value);
-                document.getElementById('text').innerHTML = inference(query, seed, size, count);
+                document.getElementById('text').innerHTML = inference(query, seed, size, count, true);
                 return false;
             }
             function isSpace(character) {
@@ -80,7 +80,7 @@
                 seed = Math.floor(Math.random() * 1000000);
                 size = query.length;
                 count = parseInt(document.getElementById('count').value);
-                document.getElementById('text').innerHTML = inference(query, seed, size, count);
+                document.getElementById('text').innerHTML = inference(query, seed, size, count, false);
                 return true;
             }
             var form = document.getElementById("form");

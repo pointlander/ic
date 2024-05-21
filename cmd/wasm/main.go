@@ -36,7 +36,7 @@ func Load() {
 	return
 }
 
-func Inference(prefix string, seed int64, size, count int) string {
+func Inference(prefix string, seed int64, size, count int, manual bool) string {
 	pair := tree.Recursive(ic.Pair{Str: []byte(prefix)}, 8)
 	index := pair.Idx - count
 	if index < 0 {
@@ -87,7 +87,7 @@ func Inference(prefix string, seed int64, size, count int) string {
 					booksValue += ranges[book].Title + ", "
 				}
 				booksValue = strings.ReplaceAll(booksValue, "'", "")
-				if !setTitles {
+				if !setTitles && manual {
 					doc := js.Global().Get("document")
 					body := doc.Call("getElementById", "books")
 					body.Set("innerHTML", booksValue)
@@ -140,10 +140,10 @@ func loadWrapper() js.Func {
 
 func inferenceWrapper() js.Func {
 	inferenceFunc := js.FuncOf(func(this js.Value, args []js.Value) any {
-		if len(args) != 4 {
+		if len(args) != 5 {
 			return "Invalid no of arguments passed"
 		}
-		return Inference(args[0].String(), int64(args[1].Int()), args[2].Int(), args[3].Int())
+		return Inference(args[0].String(), int64(args[1].Int()), args[2].Int(), args[3].Int(), args[4].Bool())
 	})
 	return inferenceFunc
 }
