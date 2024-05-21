@@ -35,14 +35,15 @@ func Load() {
 }
 
 func Inference(prefix string, seed int64, size, count int) string {
+	books := make([][]int, 0, 8)
 	pair := tree.Recursive(ic.Pair{Str: prefix}, 8)
-	_, result := tree.Inference(pair.Str, seed, size, count)
+	_, result, books := tree.Inference(pair.Str, books, seed, size, count)
 	index := pair.Idx - count
 	if index < 0 {
 		index = 0
 	}
 	end := pair.Idx
-	idx := strings.LastIndex(string(tree.Buffer[index:end]), prefix)
+	idx := strings.LastIndex(string(tree.Buffer[index:end]), pair.Str)
 	if idx > 0 {
 		end = index + idx + len(prefix)
 	}
