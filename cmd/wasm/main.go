@@ -78,7 +78,7 @@ func Inference(prefix string, seed int64, size, count int) string {
 	suffix := string(pair.Str)
 	word = false
 	text, books = "", []int{}
-	//html += fmt.Sprintf("<div>%d %d</div>", len(suffix), len(pair.Bok))
+	setTitles := false
 	for i, value := range suffix {
 		if unicode.IsSpace(value) {
 			if word {
@@ -87,6 +87,12 @@ func Inference(prefix string, seed int64, size, count int) string {
 					booksValue += ranges[book].Title + ", "
 				}
 				booksValue = strings.ReplaceAll(booksValue, "'", "")
+				if !setTitles {
+					doc := js.Global().Get("document")
+					body := doc.Call("getElementById", "books")
+					body.Set("innerHTML", booksValue)
+					setTitles = true
+				}
 				html += fmt.Sprintf("<span onclick=\"selectWord(event, '%s');\" class=\"fragment\">%s", booksValue, text)
 				html += fmt.Sprintf("</span>%c", value)
 				word = false
